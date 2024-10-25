@@ -13,6 +13,10 @@ const serviceHistory = new mongoose.Schema({
         type: String,
         required: true,
     },
+    duration: {
+        type: Number,
+        required: true,
+    },
     Date: {
         type: Date,
         default: Date.now,

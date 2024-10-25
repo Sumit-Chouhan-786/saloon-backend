@@ -76,12 +76,23 @@ app.post("/user/appointment", async (req, res) => {
         staffId,
         sName,
         startTime,
+        duration,
         endTime,
         price,
         description,
     } = req.body;
 
-    if (!email || !date || !staffId || !sName || !startTime || !endTime) {
+    if (
+        !email ||
+        !date ||
+        !staffId ||
+        !sName ||
+        !startTime ||
+        !endTime ||
+        !price ||
+        !description ||
+        !duration
+    ) {
         return res.json({
             message: "All fields are required",
         });
@@ -100,6 +111,7 @@ app.post("/user/appointment", async (req, res) => {
         price,
         description,
         startTime,
+        duration,
         endTime,
         description,
         staff: staffId,
@@ -161,7 +173,7 @@ app.put("/user/appointment/cancel", async (req, res) => {
 app.put("/user/appointment/update", async (req, res) => {
     const { email, appointmentId, date, startTime, endTime } = req.body;
 
-    const user = await User.findById(email);
+    const user = await User.findOne({ email });
 
     if (!user) {
         return res.json({
@@ -169,24 +181,24 @@ app.put("/user/appointment/update", async (req, res) => {
         });
     }
 
-    const History = await History.findOne(
-        mongoose.Types.ObjectId(appointmentId)
+    const his = await History.findById(
+        new mongoose.Types.ObjectId(appointmentId)
     );
 
-    if (!History) {
+    if (!his) {
         return res.json({
             message: "Appointment not found",
         });
     }
 
-    History.date = date;
-    History.startTime = startTime;
-    History.endTime = endTime;
-    await History.save();
+    his.Date = date;
+    his.startTime = startTime;
+    his.endTime = endTime;
+    await his.save();
 
     res.json({
         message: "Appointment updated successfully",
-        appointment: History,
+        appointment: his,
     });
 });
 
@@ -364,6 +376,39 @@ app.get("/admin/services", async (req, res) => {
 
     res.json({
         services,
+    });
+});
+
+// update a service route
+
+app.post("/admin/service/update", async (req, res) => {
+    const { id, name, price, duration, description } = req.body;
+    console.log("id", id);
+    console.log("name", name);
+    console.log("price", price);
+    console.log("duration", duration);
+    console.log("description", description);
+
+    const service = await serviceModel.findById(
+        new mongoose.Types.ObjectId(id)
+    );
+
+    if (!service) {
+        return res.json({
+            message: "Service not found",
+        });
+    }
+
+    service.name = name;
+    service.price = price;
+    service.duration = duration;
+    service.description = description;
+
+    await service.save();
+
+    res.json({
+        message: "Service updated successfully",
+        service,
     });
 });
 
