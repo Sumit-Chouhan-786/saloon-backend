@@ -18,12 +18,7 @@ const staffSchema = new mongoose.Schema({
     upcomingAppointments: {
         type: Number,
         required: true,
-    },
-
-    services: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "ServiceOfferd",
-        default: [],
+        default: 0,
     },
 
     notAvailable: {

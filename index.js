@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import User from "./Model/userModel.js";
 import History from "./Model/serviceHistoryModel.js";
 import Staff from "./Model/staffModel.js";
+import serviceModel from "./Model/serviceModel.js";
 
 const app = express();
 
@@ -80,6 +81,12 @@ app.post("/user/appointment", async (req, res) => {
         description,
     } = req.body;
 
+    if (!email || !date || !staffId || !sName || !startTime || !endTime) {
+        return res.json({
+            message: "All fields are required",
+        });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -89,7 +96,7 @@ app.post("/user/appointment", async (req, res) => {
     }
     const newAppointment = new History({
         name: sName,
-        date,
+        Date: date,
         price,
         description,
         startTime,
@@ -116,7 +123,10 @@ app.post("/user/appointment", async (req, res) => {
 app.put("/user/appointment/cancel", async (req, res) => {
     const { email, appointmentId } = req.body;
 
-    const user = await User.findById(email);
+    console.log("email", email);
+
+    console.log("appointmentId", appointmentId);
+    const user = await User.findOne({ email });
 
     if (!user) {
         return res.json({
@@ -126,21 +136,23 @@ app.put("/user/appointment/cancel", async (req, res) => {
 
     // dont delete the appointment from the database
 
-    const History = await History.findById(appointmentId);
+    const his = await History.findById(
+        new mongoose.Types.ObjectId(appointmentId)
+    );
 
-    if (!History) {
+    if (!his) {
         return res.json({
             message: "Appointment not found",
         });
     }
 
-    History.status = "cancelled";
+    his.status = "cancelled";
 
-    await History.save();
+    await his.save();
 
     res.json({
         message: "Appointment cancelled successfully",
-        appointment: History,
+        appointment: his,
     });
 });
 
@@ -157,7 +169,9 @@ app.put("/user/appointment/update", async (req, res) => {
         });
     }
 
-    const History = await History.findById(appointmentId);
+    const History = await History.findOne(
+        mongoose.Types.ObjectId(appointmentId)
+    );
 
     if (!History) {
         return res.json({
@@ -173,6 +187,31 @@ app.put("/user/appointment/update", async (req, res) => {
     res.json({
         message: "Appointment updated successfully",
         appointment: History,
+    });
+});
+
+// get user/services-staff
+
+app.get("/user/services-staff", async (req, res) => {
+    const { email } = req.headers;
+
+    const user = await User.findOne({
+        email,
+    });
+
+    if (!user) {
+        return res.json({
+            message: "User not found",
+        });
+    }
+
+    const staffs = await Staff.find();
+
+    const services = await serviceModel.find();
+
+    res.json({
+        staffs,
+        services,
     });
 });
 
@@ -201,13 +240,12 @@ app.get("/user/appointments", async (req, res) => {
 //  Create a route
 
 app.post("/admin/staff", async (req, res) => {
-    const { name, email, services } = req.body;
+    const { name, email } = req.body;
 
-    const newStaff = new staffModel({
+    const newStaff = new Staff({
         name,
         email,
         appointments: [],
-        services: [...services],
         notAvailable: [],
     });
 
@@ -231,20 +269,12 @@ app.get("/admin/staffs", async (req, res) => {
 
 //  delete a staff route
 
-app.delete("/admin/staff", async (req, res) => {
-    const { email } = req.header;
+app.post("/admin/delete-staff", async (req, res) => {
+    const { id } = req.body;
 
-    const staff = await Staff.findOne({
-        email,
-    });
+    //  delete the staff from the database
 
-    if (!staff) {
-        return res.json({
-            message: "Staff not found",
-        });
-    }
-
-    await staff.delete();
+    await Staff.findByIdAndDelete(new mongoose.Types.ObjectId(id));
 
     res.json({
         message: "Staff deleted successfully",
@@ -304,6 +334,50 @@ app.get("/admin/appointments", async (req, res) => {
 
     res.json({
         appointments,
+    });
+});
+
+//  add services
+
+app.post("/admin/services", async (req, res) => {
+    const { name, price, duration, description } = req.body;
+
+    const newService = new serviceModel({
+        name,
+        price,
+        duration,
+        description,
+    });
+
+    await newService.save();
+
+    res.json({
+        message: "Service created successfully",
+        service: newService,
+    });
+});
+
+// get all services
+
+app.get("/admin/services", async (req, res) => {
+    const services = await serviceModel.find();
+
+    res.json({
+        services,
+    });
+});
+
+//  delete a service route
+
+app.post("/admin/delete-service", async (req, res) => {
+    const { id } = req.body;
+
+    //  delete the service from the database
+
+    await serviceModel.findByIdAndDelete(new mongoose.Types.ObjectId(id));
+
+    res.json({
+        message: "Service deleted successfully",
     });
 });
 

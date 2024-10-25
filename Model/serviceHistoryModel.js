@@ -26,7 +26,8 @@ const serviceHistory = new mongoose.Schema({
         required: true,
     },
     staff: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Staff",
         required: true,
     },
     customer: {
